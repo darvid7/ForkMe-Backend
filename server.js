@@ -150,15 +150,18 @@ app.post('/locations', (req, res) => {
 			console.error(err);
 		}
 		const results = data.results;
-		
+
+		// Note: Sometimes the index of the city is address changes (local vs Heroku).
+		// Check if values are all just alphabet characters, but then Monash, Vic, Aus will also match?
+
 		for (var i = 0; i < results.length; i++) {
 			console.log('Index: ' + i);
 			console.log(results[i]);
 		}
 
 
-		if (results.length > 2) {
-			formattedCityAddress = results[2]['formatted_address'];			
+		if (results.length > 3) {
+			formattedCityAddress = results[3]['formatted_address'];			
 		} else {
 			console.error(err);
 		}
