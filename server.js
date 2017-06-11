@@ -9,7 +9,7 @@ const port = process.env.PORT || 8080;
 // Use to parse params/body from request.
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
+	extended: true
 })); 
 
 app.listen(port, () => {
@@ -18,10 +18,10 @@ app.listen(port, () => {
 
 // Set up GeoCoder.
 var options = {
-  provider: 'google',
-  httpAdapter: 'https',
-  apiKey: 'AIzaSyBZOpO8-lc7tx9GJRdrFMzH9kqF5d-Y1RQ', 
-  formatter: null
+	provider: 'google',
+	httpAdapter: 'https',
+	apiKey: 'AIzaSyBZOpO8-lc7tx9GJRdrFMzH9kqF5d-Y1RQ', 
+	formatter: null
 };
 
 // Postgress db connection.
@@ -40,8 +40,9 @@ function createTableDevelopers() {
 	    	'login VARCHAR(500) PRIMARY KEY,' +
 	    	'email VARCHAR(500),' +
 	    	'city VARCHAR(500) not null,' +
-	    	'message VARCHAR(500) not null,' + 
-	    	'name VARCHAR(500) not null)'
+	    	'msg VARCHAR(500) not null,' + 
+	    	'name VARCHAR(500) not null,' +
+	    	'avatar_url VARCHAR(1000) not null)'
 	    	)
 		.on('end', () => { 
 			// Safe to assume this will happen before any transactions.
@@ -104,8 +105,7 @@ app.get('/developers/:login', (req, res) => {
 			})
 			.on('end', () => {
 				if (results[0] !== undefined) {
-					console.log(results);
-					console.log(results[0])
+					
 					var city = results[0]['city'];
 					var relevantDevelopers = [];
 					client
@@ -120,7 +120,7 @@ app.get('/developers/:login', (req, res) => {
 						})
 				} else {
 					// No developers matching.
-					return res.json();
+					return res.json({success: false, message: 'No entries found for user ' + login});
 				}
 								
 			});
@@ -173,14 +173,14 @@ app.post('/locations', (req, res) => {
 			console.log('City: ' + city);
 			// Insert data.
 			client
-				.query('INSERT INTO developers(login, email, city, message, name) VALUES($1, $2, $3, $4, $5)', 
-					[req.body.login, email, city, message, name])
+				.query('INSERT INTO developers(login, email, city, msg, name, avatar_url) VALUES($1, $2, $3, $4, $5, $6)', 
+					[req.body.login, email, city, message, name, req.body.avatarUrl])
 				.on('error', (error) => {
 					console.log('/locations potential error: ' + error);
 					// Duplicate key error (assumed, kinda hacky but works).
 					client
-						.query('UPDATE developers SET email=($1), city=($2), message=($3), name=($4) WHERE login=($5)',
-							[email, city, message, name, req.body.login])
+						.query('UPDATE developers SET email=($1), city=($2), msg=($3), name=($4), avatar_url=($5) WHERE login=($6)',
+							[email, city, message, name, req.body.avatarUrl, req.body.login])
 						.on('end', () => {
 							console.log('Update success: ' + req.body.login);
 							done();
@@ -204,8 +204,8 @@ app.post('/master/seed/developers', (req, res) => {
 		const developer = developers[i];
 		// Note: had to change location from GitHub API (it is inconsistent i.e. sometimes Melbourne Vic, Aus, other just Melbourne etc). Stick with GeoCoding response.
 		client
-			.query('INSERT INTO developers(login, email, city, message, name) VALUES($1, $2, $3, $4, $5)', 
-						[developer['login'], developer['email'], developer['location'], developer['msg'], developer['name']])
+			.query('INSERT INTO developers(login, email, city, msg, name, avatar_url) VALUES($1, $2, $3, $4, $5, $6)', 
+						[developer['login'], developer['email'], developer['location'], developer['msg'], developer['name'], developer['avatar_url']])
 			.on('error', (error) => {
 				console.error(error);
 				wentWell = false;
@@ -215,6 +215,5 @@ app.post('/master/seed/developers', (req, res) => {
 			});
 	}
 	return res.status(200).json({success: wentWell});
-
 });
 
