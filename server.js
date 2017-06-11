@@ -143,7 +143,7 @@ app.post('/locations', (req, res) => {
 	const name = req.body.name !== '' ? req.body.name : 'N/A';
 	const message = req.body.message !== '' ? req.body.message : 'Hi!';
 	const email = req.body.email !== '' ? req.body.message :  'N/A'; //  Might lead to issues with email intent.
-
+	const avatarUrl = req.body.avatarUrl !== '' ? req.body.avatarUrl : 'https://assets-cdn.github.com/images/modules/open_graph/github-mark.png'; 
 	geocoder.reverseGeocode(latitude, longitude,  (err, data) => {
 		var formattedCityAddress = "not_found"; // Default error value.
 		if (err) {
@@ -174,13 +174,13 @@ app.post('/locations', (req, res) => {
 			// Insert data.
 			client
 				.query('INSERT INTO developers(login, email, city, msg, name, avatar_url) VALUES($1, $2, $3, $4, $5, $6)', 
-					[req.body.login, email, city, message, name, req.body.avatarUrl])
+					[req.body.login, email, city, message, name, avatarUrl])
 				.on('error', (error) => {
 					console.log('/locations potential error: ' + error);
 					// Duplicate key error (assumed, kinda hacky but works).
 					client
 						.query('UPDATE developers SET email=($1), city=($2), msg=($3), name=($4), avatar_url=($5) WHERE login=($6)',
-							[email, city, message, name, req.body.avatarUrl, req.body.login])
+							[email, city, message, name, avatarUrls, req.body.login])
 						.on('end', () => {
 							console.log('Update success: ' + req.body.login);
 							done();
