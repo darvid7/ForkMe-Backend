@@ -1,0 +1,31 @@
+{
+  "name": "forkme-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darvid7/ForkMe-Backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/darvid7/ForkMe-Backend/issues"
+  },
+  "homepage": "https://github.com/darvid7/ForkMe-Backend#readme",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "geocoder": "^0.2.3",
+    "mongodb": "^2.2.28",
+    "pg": "6.2.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}
