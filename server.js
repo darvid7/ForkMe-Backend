@@ -6,6 +6,7 @@ var pg = require('pg');
 const app = express();
 const port = process.env.PORT || 8080;
 
+// Use to parse params/body from request.
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
@@ -49,6 +50,8 @@ client
 var repositories = require('./app/store/repositories');
 var developers = require('./app/store/developers');
 
+// Routes.
+
 app.get('/master/drop/developers', (req, res) => {
 	client
 		.query('DROP TABLE IF EXISTS developers CASCADE')
@@ -61,7 +64,6 @@ app.get('/master/drop/developers', (req, res) => {
 	return res.json({'drop': 'developers'});
 });
 
-// Routes.
 app.get('/', (req, res) => {
 	res.send("Hi, im running on port: " + port);
 });

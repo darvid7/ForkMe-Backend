@@ -20,7 +20,9 @@
   "homepage": "https://github.com/darvid7/ForkMe-Backend#readme",
   "dependencies": {
     "body-parser": "^1.17.2",
-    "express": "^4.15.3"
+    "express": "^4.15.3",
+    "geocoder": "^0.2.3",
+    "pg": "6.2.4"
   },
   "devDependencies": {
     "nodemon": "^1.11.0"
