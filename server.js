@@ -51,10 +51,43 @@ app.get('/repositories', (req, res) => {
 	res.send(repositories);
 });
 
+// Assume query will include: login of current user and a longitude and latitude.
+// Use geocoding service to look up city, return records with city key in a database.
+// Hit using: http://localhost:8080/developers/david
 app.get('/developers/:login', (req, res) => {
-	res.send(developers);
-})
+	const login = req.params.login;
+	console.log('\nDevelopers get request: ' + login);
+	pg.connect(dbConnectionUrl, (err, client, done) => {
+		if (err) {
+			done();
+			console.error(err);
+			return res.status(500).json({success: false, data: 'No location entry found for ' + login});
+		}
+		var results = [];
+		client
+			.query('SELECT city FROM developers WHERE login=($1)', [login])
+			.on('row', (row) => {
+				// Should only happen once.
+				results.push(row);
+				console.log('City found: ' + row.city);
+			})
+			.on('end', () => {
+				var city = results[0];
+				var relevantDevelopers = [];
+				client
+					.query('SELECT * FROM developers WHERE city=($1) AND NOT login=($2)', [city, login])
+					.on('row', (row) => {
+						relevantDevelopers.push(row);
+					})
+					.on('end', () => {
+						done();
+						console.log(relevantDevelopers);
+						return res.json(relevantDevelopers);
+					})
+			});
 
+	})
+})
 /*
 Assume post request body is of form:
 {email: 'validemail@email.com', latitude: -37.123414, login: 'username', longitude: 145.12341, message: 'my message', name: 'my name'}
