@@ -3,7 +3,6 @@ const bodyParser = require('body-parser');
 var geocoder = require('geocoder');
 var pg = require('pg');
 
-// App/Middleware set up.
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -16,18 +15,23 @@ app.listen(port, () => {
 	console.log("Server running on port " + port);
 });
 
-// Load data stores.
-var repositories = require('./app/store/repositories');
-var developers = require('./app/store/developers');
+// Set up GeoCoder.
+var options = {
+  provider: 'google',
+  httpAdapter: 'https',
+  apiKey: 'AIzaSyBZOpO8-lc7tx9GJRdrFMzH9kqF5d-Y1RQ', 
+  formatter: null
+};
 
-// Postgres database set up.
-const dbConnectionUrl = 'postgres://localhost:5432/';
+// Postgress db connection.
+const dbConnectionUrl = process.env.DATABASE_URL || 'postgres://localhost:5432/';
 const client = new pg.Client(dbConnectionUrl);
 client.connect();
 
+
 // CREATE TABLE IF NOT EXIST
 // Precondition: This happens before any end points triggered by clients.
-// Create table if it doesn't already exist, only happens once.
+// Create table if it doesn't already exist.
 client
 	.query(
     	'CREATE TABLE IF NOT EXISTS developers(' +
@@ -41,6 +45,21 @@ client
 		console.log('Created table developers');
 	});
 
+// Load data stores.
+var repositories = require('./app/store/repositories');
+var developers = require('./app/store/developers');
+
+app.get('/master/drop/developers', (req, res) => {
+	client
+		.query('DROP TABLE IF EXISTS developers CASCADE')
+		.on('end', () => {
+			console.log('Dropped table if existed developers');
+		})
+		.on('error', (error) => {
+			console.error(error);
+		});
+	return res.json({'drop': 'developers'});
+});
 
 // Routes.
 app.get('/', (req, res) => {
@@ -51,9 +70,11 @@ app.get('/repositories', (req, res) => {
 	res.send(repositories);
 });
 
-// Assume query will include: login of current user and a longitude and latitude.
-// Use geocoding service to look up city, return records with city key in a database.
-// Hit using: http://localhost:8080/developers/david
+/*
+Assume query will include: login of current user and a longitude and latitude.
+Use geocoding service to look up city, return records with city key in a database.
+Hit using: http://localhost:8080/developers/david
+*/
 app.get('/developers/:login', (req, res) => {
 	const login = req.params.login;
 	console.log('\nDevelopers get request: ' + login);
@@ -88,6 +109,7 @@ app.get('/developers/:login', (req, res) => {
 
 	})
 })
+
 /*
 Assume post request body is of form:
 {email: 'validemail@email.com', latitude: -37.123414, login: 'username', longitude: 145.12341, message: 'my message', name: 'my name'}
@@ -144,5 +166,4 @@ app.post('/locations', (req, res) => {
 		});
 	});
 });
-
 
