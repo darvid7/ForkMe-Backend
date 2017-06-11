@@ -122,6 +122,12 @@ app.post('/locations', (req, res) => {
 	console.log(req.body);
 	const latitude = req.body.latitude;
 	const longitude = req.body.longitude;
+
+	// Theses values are assumed to be there (most people will provide them), but if not provide defaults so app doesn't crash.
+	const name = req.body.name !== '' ? req.body.name : 'N/A';
+	const message = req.body.message !== '' ? req.body.message : 'Hi!';
+	const email = req.body.email !== '' ? req.body.message :  'N/A'; //  Might lead to issues with email intent.
+
 	geocoder.reverseGeocode(latitude, longitude,  (err, data) => {
 		var formattedCityAddress = "not_found"; // Default error value.
 		if (err) {
@@ -146,13 +152,13 @@ app.post('/locations', (req, res) => {
 			// Insert data.
 			client
 				.query('INSERT INTO developers(login, email, city, message, name) VALUES($1, $2, $3, $4, $5)', 
-					[req.body.login, req.body.email, city, req.body.message, req.body.name])
+					[req.body.login, email, city, message, name])
 				.on('error', (error) => {
 					console.log('/locations potential error: ' + error);
 					// Duplicate key error (assumed, kinda hacky but works).
 					client
 						.query('UPDATE developers SET email=($1), city=($2), message=($3), name=($4) WHERE login=($5)',
-							[req.body.email, city, req.body.message, req.body.name, req.body.login])
+							[email, city, message, name, req.body.login])
 						.on('end', () => {
 							console.log('Update success: ' + req.body.login);
 							done();
