@@ -33,18 +33,23 @@ client.connect();
 // CREATE TABLE IF NOT EXIST
 // Precondition: This happens before any end points triggered by clients.
 // Create table if it doesn't already exist.
-client
-	.query(
-    	'CREATE TABLE IF NOT EXISTS developers(' +
-    	'login VARCHAR(500) PRIMARY KEY,' +
-    	'email VARCHAR(500),' +
-    	'city VARCHAR(500) not null,' +
-    	'message VARCHAR(500) not null,' + 
-    	'name VARCHAR(500) not null)'
-    	)
-	.on('end', () => { 
-		console.log('Created table developers');
-	});
+function createTableDevelopers() {
+	client
+		.query(
+	    	'CREATE TABLE IF NOT EXISTS developers(' +
+	    	'login VARCHAR(500) PRIMARY KEY,' +
+	    	'email VARCHAR(500),' +
+	    	'city VARCHAR(500) not null,' +
+	    	'message VARCHAR(500) not null,' + 
+	    	'name VARCHAR(500) not null)'
+	    	)
+		.on('end', () => { 
+			// Safe to assume this will happen before any transactions.
+			console.log('Created table developers');
+		});
+}
+
+createTableDevelopers();
 
 // Load data stores.
 var repositories = require('./app/store/repositories');
@@ -52,16 +57,19 @@ var developers = require('./app/store/developers');
 
 // Routes.
 
-app.get('/master/drop/developers', (req, res) => {
+app.post('/master/reset/developers', (req, res) => {
+	var wentWell = true;
 	client
 		.query('DROP TABLE IF EXISTS developers CASCADE')
 		.on('end', () => {
 			console.log('Dropped table if existed developers');
+			createTableDevelopers();
 		})
 		.on('error', (error) => {
 			console.error(error);
+			wentWell = false;
 		});
-	return res.json({'drop': 'developers'});
+	return res.json({drop: 'developers', created: 'developers', success: wentWell});
 });
 
 app.get('/', (req, res) => {
@@ -95,18 +103,26 @@ app.get('/developers/:login', (req, res) => {
 				console.log('City found: ' + row.city);
 			})
 			.on('end', () => {
-				var city = results[0]['city'];
-				var relevantDevelopers = [];
-				client
-					.query('SELECT * FROM developers WHERE city=($1) AND NOT login=($2)', [city, login])
-					.on('row', (row) => {
-						relevantDevelopers.push(row);
-					})
-					.on('end', () => {
-						done();
-						console.log(relevantDevelopers);
-						return res.json(relevantDevelopers);
-					})
+				if (results[0] !== undefined) {
+					console.log(results);
+					console.log(results[0])
+					var city = results[0]['city'];
+					var relevantDevelopers = [];
+					client
+						.query('SELECT * FROM developers WHERE city=($1) AND NOT login=($2)', [city, login])
+						.on('row', (row) => {
+							relevantDevelopers.push(row);
+						})
+						.on('end', () => {
+							done();
+							console.log(relevantDevelopers);
+							return res.json(relevantDevelopers);
+						})
+				} else {
+					// No developers matching.
+					return res.json();
+				}
+								
 			});
 
 	})
@@ -173,5 +189,26 @@ app.post('/locations', (req, res) => {
 				})
 		});
 	});
+});
+
+// Precondition: People/logins in app/store/developers.js not already in database.
+app.post('/master/seed/developers', (req, res) => {
+	var wentWell = true;
+	for (var i = 0; i < developers.length; i++) {
+		const developer = developers[i];
+		// Note: had to change location from GitHub API (it is inconsistent i.e. sometimes Melbourne Vic, Aus, other just Melbourne etc). Stick with GeoCoding response.
+		client
+			.query('INSERT INTO developers(login, email, city, message, name) VALUES($1, $2, $3, $4, $5)', 
+						[developer['login'], developer['email'], developer['location'], developer['msg'], developer['name']])
+			.on('error', (error) => {
+				console.error(error);
+				wentWell = false;
+			})
+			.on('end', () => {
+				console.log('Added: ' + developer['login']);
+			});
+	}
+	return res.status(200).json({success: wentWell});
+
 });
 
