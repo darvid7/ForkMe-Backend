@@ -63,5 +63,53 @@ Gets formatted city address and inserts into database, if error tries update, if
 app.post('/locations', (req, res) => {
 	console.log("\nLocations post request");
 	console.log(req.body);
+	const latitude = req.body.latitude;
+	const longitude = req.body.longitude;
+	geocoder.reverseGeocode(latitude, longitude,  (err, data) => {
+		var formattedCityAddress = "not_found"; // Default error value.
+		if (err) {
+			console.error(err);
+		}
+		const results = data.results;
+		if (results.length > 2) {
+			formattedCityAddress = results[2]['formatted_address'];
+		} else {
+			console.error(err);
+		}
+		console.log('Lat: ' + latitude + ', Long: ' + longitude + ' reverse geocoded to: ' + formattedCityAddress);
+		
+		const city = formattedCityAddress;
+		pg.connect(dbConnectionUrl, (err, client, done) => {
+			if (err) {
+				done();
+				console.err(err);
+				return res.status(500).json({success: false, data: err});
+			}
+			console.log('City: ' + city);
+			// Insert data.
+			client
+				.query('INSERT INTO developers(login, email, city, message, name) VALUES($1, $2, $3, $4, $5)', 
+					[req.body.login, req.body.email, city, req.body.message, req.body.name])
+				.on('error', (error) => {
+					console.log('/locations potential error: ' + error);
+					// Duplicate key error (assumed, kinda hacky but works).
+					client
+						.query('UPDATE developers SET email=($1), city=($2), message=($3), name=($4) WHERE login=($5)',
+							[req.body.email, city, req.body.message, req.body.name, req.body.login])
+						.on('end', () => {
+							console.log('Update success: ' + req.body.login);
+							done();
+							return res.status(200).json({success: true});	
+						});
+					// If another error happens will propagate up to top error.
+				})
+				.on('end', () => {
+					console.log('Insert success: ' + req.body.login);
+					done();
+					return res.status(200).json({success: true});
+				})
+		});
+	});
 });
+
 
