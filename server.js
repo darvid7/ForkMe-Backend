@@ -150,8 +150,15 @@ app.post('/locations', (req, res) => {
 			console.error(err);
 		}
 		const results = data.results;
+		
+		for (var i = 0; i < results.length; i++) {
+			console.log('Index: ' + i);
+			console.log(results[i]);
+		}
+
+
 		if (results.length > 2) {
-			formattedCityAddress = results[2]['formatted_address'];
+			formattedCityAddress = results[2]['formatted_address'];			
 		} else {
 			console.error(err);
 		}
