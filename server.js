@@ -72,7 +72,7 @@ app.get('/developers/:login', (req, res) => {
 				console.log('City found: ' + row.city);
 			})
 			.on('end', () => {
-				var city = results[0];
+				var city = results[0]['city'];
 				var relevantDevelopers = [];
 				client
 					.query('SELECT * FROM developers WHERE city=($1) AND NOT login=($2)', [city, login])
