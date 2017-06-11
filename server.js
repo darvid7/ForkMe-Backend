@@ -160,8 +160,8 @@ app.post('/locations', (req, res) => {
 		}
 
 
-		if (results.length > 3) {
-			formattedCityAddress = results[3]['formatted_address'];			
+		if (results.length > 2) {
+			formattedCityAddress = results[2]['formatted_address'];			
 		} else {
 			console.error(err);
 		}
