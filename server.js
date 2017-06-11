@@ -152,18 +152,14 @@ app.post('/locations', (req, res) => {
 		const results = data.results;
 
 		// Note: Sometimes the index of the city is address changes (local vs Heroku).
-		// Check if values are all just alphabet characters, but then Monash, Vic, Aus will also match?
-
+		// Need to match the address_components type.
+		// Need to match this: [ 'colloquial_area', 'locality', 'political' ];
 		for (var i = 0; i < results.length; i++) {
-			console.log('Index: ' + i);
-			console.log(results[i]);
-		}
-
-
-		if (results.length > 2) {
-			formattedCityAddress = results[2]['formatted_address'];			
-		} else {
-			console.error(err);
+			const types = results[i]['types'];
+			if (types.length == 3 && types[0] === 'colloquial_area' && types[1] === 'locality' && types[2] === 'political') {
+				formattedCityAddress = results[i]['formatted_address'];
+				break;
+			}
 		}
 		console.log('Lat: ' + latitude + ', Long: ' + longitude + ' reverse geocoded to: ' + formattedCityAddress);
 		
