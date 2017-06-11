@@ -1,9 +1,10 @@
 const express = require('express');
-const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
+var geocoder = require('geocoder');
+var pg = require('pg');
 
 const app = express();
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
