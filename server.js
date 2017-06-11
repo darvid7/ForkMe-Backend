@@ -180,7 +180,7 @@ app.post('/locations', (req, res) => {
 					// Duplicate key error (assumed, kinda hacky but works).
 					client
 						.query('UPDATE developers SET email=($1), city=($2), msg=($3), name=($4), avatar_url=($5) WHERE login=($6)',
-							[email, city, message, name, avatarUrls, req.body.login])
+							[email, city, message, name, avatarUrl, req.body.login])
 						.on('end', () => {
 							console.log('Update success: ' + req.body.login);
 							done();
