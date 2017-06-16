@@ -120,7 +120,7 @@ app.get('/developers/:login', (req, res) => {
 						})
 				} else {
 					// No developers matching.
-					return res.json({success: false, message: 'No entries found for user ' + login});
+					return res.status(404).json({success: false, message: 'No entries found for user ' + login});
 				}
 								
 			});
